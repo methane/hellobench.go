@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"runtime"
 )
 
 type Message struct {
@@ -23,13 +22,14 @@ var (
 	helloWorldBytes = []byte(helloWorldString)
 )
 
-var prefork = flag.Bool("prefork", false, "use prefork")
+var prefork int
 var child = flag.Bool("child", false, "is child proc")
 
 func main() {
 	var listener net.Listener
+	flag.IntVar(&prefork, "prefork", 0, "Number of worker process.")
 	flag.Parse()
-	if *prefork {
+	if prefork != 0 {
 		listener = doPrefork()
 	}
 
@@ -37,7 +37,7 @@ func main() {
 	http.HandleFunc("/plaintext", plaintextHandler)
 	http.HandleFunc("/", plaintextHandler)
 
-	if !*prefork {
+	if prefork == 0 {
 		http.ListenAndServe(":8080", nil)
 	} else {
 		http.Serve(listener, nil)
@@ -62,9 +62,9 @@ func doPrefork() (listener net.Listener) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		children := make([]*exec.Cmd, runtime.NumCPU()/2)
+		children := make([]*exec.Cmd, prefork)
 		for i := range children {
-			children[i] = exec.Command(os.Args[0], "-prefork", "-child")
+			children[i] = exec.Command(os.Args[0], "-prefork=1", "-child")
 			children[i].Stdout = os.Stdout
 			children[i].Stderr = os.Stderr
 			children[i].ExtraFiles = []*os.File{fl}
