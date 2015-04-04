@@ -29,9 +29,7 @@ var child = flag.Bool("child", false, "is child proc")
 func main() {
 	var listener net.Listener
 	flag.Parse()
-	if !*prefork {
-		runtime.GOMAXPROCS(runtime.NumCPU())
-	} else {
+	if *prefork {
 		listener = doPrefork()
 	}
 
