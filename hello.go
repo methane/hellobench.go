@@ -86,7 +86,6 @@ func doPrefork() (listener net.Listener) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		runtime.GOMAXPROCS(2)
 	}
 	return listener
 }
