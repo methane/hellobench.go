@@ -404,3 +404,28 @@ Running 10s test @ http://10.0.1.70:8080/json
 Requests/sec: 169531.78
 Transfer/sec:     21.99MB
 ```
+
+## Go 1.5 w/o GC
+
+```
+GOGC=off GOMAXPROCS=36 ./hello1.5
+```
+
+```
+$ wrk -t36 -c256  http://10.0.1.70:8080/json
+Running 10s test @ http://10.0.1.70:8080/json
+  36 threads and 256 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   549.48us  735.69us  32.42ms   98.42%
+    Req/Sec    13.64k   806.55    17.31k    88.97%
+  4922988 requests in 10.10s, 638.51MB read
+Requests/sec: 487451.24
+Transfer/sec:     63.22MB
+```
+
+### trace
+
+```
+$ GODEBUG=gctrace=1 GOMAXPROCS=36 ./hello1.5
+gc #1 @18.212s 1%: 0+2+0+11371+358 ms clock, 1+2+1+11371+717 ms cpu, 4->7736->7632 MB, 36 P
+```
