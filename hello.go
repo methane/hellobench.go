@@ -9,6 +9,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/exec"
+	"os/signal"
 )
 
 type Message struct {
@@ -25,6 +26,7 @@ var (
 
 var prefork int
 var child = flag.Bool("child", false, "is child proc")
+var listenAddr = flag.String("addr", ":8080", "TCP addr")
 
 func main() {
 	var listener net.Listener
@@ -39,10 +41,14 @@ func main() {
 	http.HandleFunc("/", plaintextHandler)
 
 	if prefork == 0 {
-		http.ListenAndServe(":8080", nil)
+		go func() { log.Fatal(http.ListenAndServe(*listenAddr, nil)) }()
 	} else {
-		http.Serve(listener, nil)
+		go func() { log.Fatal(http.Serve(listener, nil)) }()
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
 }
 
 func doPrefork() (listener net.Listener) {
@@ -51,7 +57,7 @@ func doPrefork() (listener net.Listener) {
 	var tcplistener *net.TCPListener
 	if !*child {
 		var addr *net.TCPAddr
-		addr, err = net.ResolveTCPAddr("tcp", ":8080")
+		addr, err = net.ResolveTCPAddr("tcp", *listenAddr)
 		if err != nil {
 			log.Fatal(err)
 		}
